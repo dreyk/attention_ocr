@@ -148,7 +148,8 @@ class _CustomImage(slim.tfexample_decoder.ItemHandler):
         im = tf.image.resize_images(im, [nh, nw])
         padw = tf.maximum(0, int(self._w) - nw)
         padh = tf.maximum(0, int(self._h) - nh)
-        return tf.image.pad_to_bounding_box(im, 0, 0, nh + padh, nw + padw)
+        im = tf.image.pad_to_bounding_box(im, 0, 0, nh + padh, nw + padw)
+        return tf.reshape(im,[int(self._h),int(self._w),3])
 
 
 def get_split(split_name, dataset_dir=None, config=None):
