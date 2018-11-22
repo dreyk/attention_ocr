@@ -29,15 +29,15 @@ DEFAULT_CONFIG = {
     'name': 'IDCAR',
     'splits': {
         'train': {
-            'size': 10,
-            'pattern': 'test/*.tfrecord'
+            'size': 4422,
+            'pattern': 'train/*.tfrecord'
         },
         'test': {
-            'size': 2072,
+            'size': 2071,
             'pattern': 'test/*'
         },
         'validation': {
-            'size': 2072,
+            'size': 2071,
             'pattern': 'test/*'
         }
     },
