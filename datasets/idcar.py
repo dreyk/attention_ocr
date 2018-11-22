@@ -185,8 +185,6 @@ def get_split(split_name, dataset_dir=None, config=None):
     keys_to_features = {
         'image/encoded':
             tf.FixedLenFeature((), tf.string, default_value=''),
-        'image/format':
-            tf.FixedLenFeature((), tf.string, default_value='png'),
         'width':
             tf.FixedLenFeature([1], tf.int64, default_value=zero),
         'height':
