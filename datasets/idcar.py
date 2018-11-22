@@ -185,7 +185,7 @@ def get_split(split_name, dataset_dir=None, config=None):
     zero = tf.zeros([1], dtype=tf.int64)
     keys_to_features = {
         'image/encoded':
-            tf.FixedLenFeature((), tf.string, default_value=''),
+            tf.FixedLenFeature([1], tf.string, default_value=''),
         'width':
             tf.FixedLenFeature([1], tf.int64, default_value=zero),
         'height':
