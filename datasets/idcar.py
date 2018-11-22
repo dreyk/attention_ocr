@@ -57,46 +57,34 @@ DEFAULT_CONFIG = {
 
 
 def read_charset(filename, null_character=u'\u2591'):
-  """Reads a charset definition from a tab separated text file.
+    """Reads a charset definition from a tab separated text file.
 
-  charset file has to have format compatible with the FSNS dataset.
+    charset file has to have format compatible with the FSNS dataset.
 
-  Args:
-    filename: a path to the charset file.
-    null_character: a unicode character used to replace '<null>' character. the
-      default value is a light shade block '░'.
+    Args:
+      filename: a path to the charset file.
+      null_character: a unicode character used to replace '<null>' character. the
+        default value is a light shade block '░'.
 
-  Returns:
-    a dictionary with keys equal to character codes and values - unicode
-    characters.
-  """
-  pattern = re.compile(r'(\d+)\t(.+)')
-  charset = {}
-  with tf.gfile.GFile(filename) as f:
-    for i, line in enumerate(f):
-      m = pattern.match(line)
-      if m is None:
-        logging.warning('incorrect charset file. line #%d: %s', i, line)
-        continue
-      code = int(m.group(1))
-      char = m.group(2).decode('utf-8')
-      if char == '<nul>':
-        char = null_character
-      charset[code] = char
-  return charset
+    Returns:
+      a dictionary with keys equal to character codes and values - unicode
+      characters.
+    """
+    pattern = re.compile(r'(\d+)\t(.+)')
+    charset = {}
+    with tf.gfile.GFile(filename) as f:
+        for i, line in enumerate(f):
+            m = pattern.match(line)
+            if m is None:
+                logging.warning('incorrect charset file. line #%d: %s', i, line)
+                continue
+            code = int(m.group(1))
+            char = m.group(2).decode('utf-8')
+            if char == '<nul>':
+                char = null_character
+            charset[code] = char
+    return charset
 
-
-class _NumOfViewsHandler(slim.tfexample_decoder.ItemHandler):
-  """Convenience handler to determine number of views stored in an image."""
-
-  def __init__(self, width_key, original_width_key, num_of_views):
-    super(_NumOfViewsHandler, self).__init__([width_key, original_width_key])
-    self._width_key = width_key
-    self._original_width_key = original_width_key
-    self._num_of_views = num_of_views
-
-  def tensors_to_item(self, keys_to_tensors):
-    return tf.to_int64(1)
 
 class _NumOfViewsHandler(slim.tfexample_decoder.ItemHandler):
     """Convenience handler to determine number of views stored in an image."""
@@ -110,112 +98,133 @@ class _NumOfViewsHandler(slim.tfexample_decoder.ItemHandler):
     def tensors_to_item(self, keys_to_tensors):
         return tf.to_int64(1)
 
+
+class _NumOfViewsHandler(slim.tfexample_decoder.ItemHandler):
+    """Convenience handler to determine number of views stored in an image."""
+
+    def __init__(self, width_key, original_width_key, num_of_views):
+        super(_NumOfViewsHandler, self).__init__([width_key, original_width_key])
+        self._width_key = width_key
+        self._original_width_key = original_width_key
+        self._num_of_views = num_of_views
+
+    def tensors_to_item(self, keys_to_tensors):
+        return tf.to_int64(1)
+
+
 class _CustomImage(slim.tfexample_decoder.ItemHandler):
-    def __init__(self,image_key=None,shape=None):
+    def __init__(self, image_key=None, shape=None,width_key='width',height_key='height'):
         if not image_key:
             image_key = 'image/encoded'
-        super(_CustomImage, self).__init__([image_key])
+        super(_CustomImage, self).__init__([image_key,width_key,height_key])
         self._image_key = image_key
+        self._width_key=width_key
+        self._height_key=height_key
         self._w = float(shape[1])
         self._h = float(shape[0])
 
     def tensors_to_item(self, keys_to_tensors):
         """See base class."""
         image_buffer = keys_to_tensors[self._image_key]
+        h = keys_to_tensors[self._height_key]
+        w = keys_to_tensors[self._width_key]
+        return self._decode(image_buffer,h,w)
 
-        return self._decode(image_buffer)
-
-    def _decode(self, image_buffer):
+    def _decode(self, image_buffer,original_h,original_w):
         image = tf.image.decode_png(image_buffer, channels=3)
-        return self._resize(image)
+        image = tf.reshape(image,[original_h,original_w,3])
+        return self._resize(image,original_h,original_w)
 
-    def _resize(self,im):
-        w = tf.cast(im.shape[1],tf.float32)
-        h = tf.cast(im.shape[0],tf.float32)
-        ratio_w = tf.maximum(w/self._w,1.0)
-        ratio_h = tf.maximum(h/self._h,1.0)
-        ratio = tf.maximum(ratio_w,ratio_h)
-        nw = tf.cast(w*ratio,tf.int32)
-        nh = tf.cast(h*ratio,tf.int32)
-        im = tf.image.resize_images(im,[nh,nw])
-        padw = tf.maximum(0,int(self._w)-nw)
-        padh = tf.maximum(0,int(self._h)-nh)
-        return tf.image.pad_to_bounding_box(im,0,0,nh+padh,nw+padw)
+    def _resize(self, im,original_h,original_w):
+        w = tf.cast(original_w, tf.float32)
+        h = tf.cast(original_h, tf.float32)
+        ratio_w = tf.maximum(w / self._w, 1.0)
+        ratio_h = tf.maximum(h / self._h, 1.0)
+        ratio = tf.maximum(ratio_w, ratio_h)
+        nw = tf.cast(w * ratio, tf.int32)
+        nh = tf.cast(h * ratio, tf.int32)
+        im = tf.image.resize_images(im, [nh, nw])
+        padw = tf.maximum(0, int(self._w) - nw)
+        padh = tf.maximum(0, int(self._h) - nh)
+        return tf.image.pad_to_bounding_box(im, 0, 0, nh + padh, nw + padw)
+
 
 def get_split(split_name, dataset_dir=None, config=None):
-  """Returns a dataset tuple for FSNS dataset.
+    """Returns a dataset tuple for FSNS dataset.
 
-  Args:
-    split_name: A train/test split name.
-    dataset_dir: The base directory of the dataset sources, by default it uses
-      a predefined CNS path (see DEFAULT_DATASET_DIR).
-    config: A dictionary with dataset configuration. If None - will use the
-      DEFAULT_CONFIG.
+    Args:
+      split_name: A train/test split name.
+      dataset_dir: The base directory of the dataset sources, by default it uses
+        a predefined CNS path (see DEFAULT_DATASET_DIR).
+      config: A dictionary with dataset configuration. If None - will use the
+        DEFAULT_CONFIG.
 
-  Returns:
-    A `Dataset` namedtuple.
+    Returns:
+      A `Dataset` namedtuple.
 
-  Raises:
-    ValueError: if `split_name` is not a valid train/test split.
-  """
-  if not dataset_dir:
-    dataset_dir = DEFAULT_DATASET_DIR
+    Raises:
+      ValueError: if `split_name` is not a valid train/test split.
+    """
+    if not dataset_dir:
+        dataset_dir = DEFAULT_DATASET_DIR
 
-  if not config:
-    config = DEFAULT_CONFIG
+    if not config:
+        config = DEFAULT_CONFIG
 
-  if split_name not in config['splits']:
-    raise ValueError('split name %s was not recognized.' % split_name)
+    if split_name not in config['splits']:
+        raise ValueError('split name %s was not recognized.' % split_name)
 
-  logging.info('Using %s dataset split_name=%s dataset_dir=%s', config['name'],
-               split_name, dataset_dir)
+    logging.info('Using %s dataset split_name=%s dataset_dir=%s', config['name'],
+                 split_name, dataset_dir)
 
-  # Ignores the 'image/height' feature.
-  zero = tf.zeros([1], dtype=tf.int64)
-  keys_to_features = {
-      'image/encoded':
-      tf.FixedLenFeature((), tf.string, default_value=''),
-      'image/format':
-      tf.FixedLenFeature((), tf.string, default_value='png'),
-      'image/width':
-      tf.FixedLenFeature([1], tf.int64, default_value=zero),
-      'image/orig_width':
-      tf.FixedLenFeature([1], tf.int64, default_value=zero),
-      'image/class':
-      tf.FixedLenFeature([config['max_sequence_length']], tf.int64),
-      'image/unpadded_class':
-      tf.VarLenFeature(tf.int64),
-      'image/text':
-      tf.FixedLenFeature([1], tf.string, default_value=''),
-  }
-  items_to_handlers = {
-      'image':
-          _CustomImage(shape=config['image_shape'],image_key='image/encoded'),
-      'label':
-      slim.tfexample_decoder.Tensor(tensor_key='image/class'),
-      'text':
-      slim.tfexample_decoder.Tensor(tensor_key='image/text'),
-      'num_of_views':
-      _NumOfViewsHandler(
-          width_key='image/width',
-          original_width_key='image/orig_width',
-          num_of_views=config['num_of_views'])
-  }
-  decoder = slim.tfexample_decoder.TFExampleDecoder(keys_to_features,
-                                                    items_to_handlers)
-  charset_file = os.path.join(dataset_dir, config['charset_filename'])
-  charset = read_charset(charset_file)
-  file_pattern = os.path.join(dataset_dir,
-                              config['splits'][split_name]['pattern'])
-  return slim.dataset.Dataset(
-      data_sources=file_pattern,
-      reader=tf.TFRecordReader,
-      decoder=decoder,
-      num_samples=config['splits'][split_name]['size'],
-      items_to_descriptions=config['items_to_descriptions'],
-      #  additional parameters for convenience.
-      charset=charset,
-      num_char_classes=len(charset),
-      num_of_views=config['num_of_views'],
-      max_sequence_length=config['max_sequence_length'],
-      null_code=config['null_code'])
+    # Ignores the 'image/height' feature.
+    zero = tf.zeros([1], dtype=tf.int64)
+    keys_to_features = {
+        'image/encoded':
+            tf.FixedLenFeature((), tf.string, default_value=''),
+        'image/format':
+            tf.FixedLenFeature((), tf.string, default_value='png'),
+        'width':
+            tf.FixedLenFeature([1], tf.int64, default_value=zero),
+        'height':
+            tf.FixedLenFeature([1], tf.int64, default_value=zero),
+        'orig_width':
+            tf.FixedLenFeature([1], tf.int64, default_value=zero),
+        'image/class':
+            tf.FixedLenFeature([config['max_sequence_length']], tf.int64),
+        'image/unpadded_class':
+            tf.VarLenFeature(tf.int64),
+        'image/text':
+            tf.FixedLenFeature([1], tf.string, default_value=''),
+    }
+    items_to_handlers = {
+        'image':
+            _CustomImage(shape=config['image_shape'], image_key='image/encoded',width_key='width',height_key='height'),
+        'label':
+            slim.tfexample_decoder.Tensor(tensor_key='image/class'),
+        'text':
+            slim.tfexample_decoder.Tensor(tensor_key='image/text'),
+        'num_of_views':
+            _NumOfViewsHandler(
+                width_key='width',
+                original_width_key='orig_width',
+                num_of_views=config['num_of_views'])
+    }
+    decoder = slim.tfexample_decoder.TFExampleDecoder(keys_to_features,
+                                                      items_to_handlers)
+    charset_file = os.path.join(dataset_dir, config['charset_filename'])
+    charset = read_charset(charset_file)
+    file_pattern = os.path.join(dataset_dir,
+                                config['splits'][split_name]['pattern'])
+    return slim.dataset.Dataset(
+        data_sources=file_pattern,
+        reader=tf.TFRecordReader,
+        decoder=decoder,
+        num_samples=config['splits'][split_name]['size'],
+        items_to_descriptions=config['items_to_descriptions'],
+        #  additional parameters for convenience.
+        charset=charset,
+        num_char_classes=len(charset),
+        num_of_views=config['num_of_views'],
+        max_sequence_length=config['max_sequence_length'],
+        null_code=config['null_code'])
