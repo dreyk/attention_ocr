@@ -56,6 +56,7 @@ def augment_image(image):
   Returns:
     Distorted Tensor image of the same shape.
   """
+  print("AugmentImage")
   with tf.variable_scope('AugmentImage'):
     height = image.get_shape().dims[0].value
     width = image.get_shape().dims[1].value
