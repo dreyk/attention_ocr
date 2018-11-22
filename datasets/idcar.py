@@ -30,7 +30,7 @@ DEFAULT_CONFIG = {
     'splits': {
         'train': {
             'size': 4423,
-            'pattern': 'train/*'
+            'pattern': 'train/*.tfrecord'
         },
         'test': {
             'size': 2072,
