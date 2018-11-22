@@ -134,7 +134,7 @@ class _CustomImage(slim.tfexample_decoder.ItemHandler):
         image = tf.image.decode_png(image_buffer, channels=3)
         print(original_h)
         print(original_w)
-        image = tf.reshape(image,tf.TensorShape(original_h,original_w,3))
+        image = tf.reshape(image,tf.TensorShape([original_h,original_w,3]))
         return self._resize(image,original_h,original_w)
 
     def _resize(self, im,original_h,original_w):
