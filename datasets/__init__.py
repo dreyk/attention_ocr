@@ -15,5 +15,6 @@
 
 import fsns
 import fsns_test
+import idcar
 
 __all__ = [fsns, fsns_test, idcar]
