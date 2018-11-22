@@ -132,7 +132,7 @@ class _CustomImage(slim.tfexample_decoder.ItemHandler):
         return self._decode(image_buffer,h,w)
 
     def _decode(self, image_buffer,original_h,original_w):
-        image = tf.image.decode_png(image_buffer, channels=3)
+        image = tf.image.decode_png(image_buffer[0], channels=3)
         #print(original_h)
         #print(original_w)
         #image = tf.reshape(image,tf.TensorShape([original_h,original_w,3]))
