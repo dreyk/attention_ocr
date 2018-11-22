@@ -47,6 +47,8 @@ DEFAULT_SHUFFLE_CONFIG = ShuffleBatchConfig(
 
 
 def augment_image(image):
+    return image
+def augment_image0(image):
   """Augmentation the image with a random modification.
 
   Args:
@@ -91,6 +93,8 @@ def augment_image(image):
 
 
 def central_crop(image, crop_size):
+    return image
+def central_crop0(image, crop_size):
   """Returns a central crop for the specified size of an image.
 
   Args:
@@ -117,7 +121,7 @@ def central_crop(image, crop_size):
 
 
 def preprocess_image(image, augment=False, central_crop_size=None,
-                     num_towers=4):
+                     num_towers=1):
   """Normalizes image to have values in a narrow range around zero.
 
   Args:

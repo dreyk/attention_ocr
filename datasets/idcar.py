@@ -99,18 +99,6 @@ class _NumOfViewsHandler(slim.tfexample_decoder.ItemHandler):
         return tf.to_int64(1)
 
 
-class _NumOfViewsHandler(slim.tfexample_decoder.ItemHandler):
-    """Convenience handler to determine number of views stored in an image."""
-
-    def __init__(self, width_key, original_width_key, num_of_views):
-        super(_NumOfViewsHandler, self).__init__([width_key, original_width_key])
-        self._width_key = width_key
-        self._original_width_key = original_width_key
-        self._num_of_views = num_of_views
-
-    def tensors_to_item(self, keys_to_tensors):
-        return tf.to_int64(1)
-
 
 class _CustomImage(slim.tfexample_decoder.ItemHandler):
     def __init__(self, image_key=None, shape=None,width_key='width',height_key='height'):
