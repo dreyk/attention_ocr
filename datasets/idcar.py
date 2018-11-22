@@ -126,8 +126,8 @@ class _CustomImage(slim.tfexample_decoder.ItemHandler):
     def tensors_to_item(self, keys_to_tensors):
         """See base class."""
         image_buffer = keys_to_tensors[self._image_key]
-        h = keys_to_tensors[self._height_key]
-        w = keys_to_tensors[self._width_key]
+        h = keys_to_tensors[self._height_key][0]
+        w = keys_to_tensors[self._width_key][0]
         return self._decode(image_buffer,h,w)
 
     def _decode(self, image_buffer,original_h,original_w):
