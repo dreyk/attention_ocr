@@ -29,7 +29,7 @@ DEFAULT_CONFIG = {
     'name': 'IDCAR',
     'splits': {
         'train': {
-            'size': 4423,
+            'size': 10,
             'pattern': 'test/*.tfrecord'
         },
         'test': {
