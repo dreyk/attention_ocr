@@ -127,7 +127,7 @@ class _CustomImage(slim.tfexample_decoder.ItemHandler):
 
     def _decode(self, image_buffer):
         image = tf.image.decode_png(image_buffer, channels=3)
-        return image
+        return self._resize(image)
 
     def _resize(self,im):
         w = tf.cast(im.shape[1],tf.float32)
