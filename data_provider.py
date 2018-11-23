@@ -136,6 +136,9 @@ def preprocess_image(image, augment=False, central_crop_size=None,
   """
   with tf.variable_scope('PreprocessImage'):
     image = tf.image.convert_image_dtype(image, dtype=tf.float32)
+    image = tf.cast(image,dtype=tf.float32)
+    image = image/255.0
+    image = tf.clip_by_value(image,0,1)
     if augment or central_crop_size:
       if num_towers == 1:
         images = [image]
@@ -150,7 +153,7 @@ def preprocess_image(image, augment=False, central_crop_size=None,
       image = tf.concat(images, 1)
 
     image = tf.subtract(image, 0.5)
-    image = tf.multiply(image, 2.5)
+    image = tf.multiply(image, 2)
 
   return image
 
