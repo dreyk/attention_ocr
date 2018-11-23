@@ -135,7 +135,7 @@ def preprocess_image(image, augment=False, central_crop_size=None,
     range.
   """
   with tf.variable_scope('PreprocessImage'):
-    image = tf.image.convert_image_dtype(image, dtype=tf.float32)
+    #image = tf.image.convert_image_dtype(image, dtype=tf.float32)
     image = tf.cast(image,dtype=tf.float32)
     image = image/255.0
     image = tf.clip_by_value(image,0,1)
